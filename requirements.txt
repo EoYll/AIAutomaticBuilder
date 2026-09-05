@@ -1,0 +1,8 @@
+# 构建机依赖（main.py 运行 + 打包所需）
+pyinstaller
+playwright
+pyautogui
+opencv-python
+pygetwindow
+pillow
+requests
