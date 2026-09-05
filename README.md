@@ -6,7 +6,7 @@
 
 支持**桌面操作**（PyAutoGUI）、**网页自动化**（Playwright）、**Excel 增删改查**（openpyxl/COM）、**屏幕 OCR**、**接口抓取**的混合流程。
 
-[![CI](https://github.com/your-name/rpa-builder/actions/workflows/ci.yml/badge.svg)](https://github.com/your-name/rpa-builder/actions/workflows/ci.yml)
+[![CI](https://github.com/EoYll/AIAutomaticBuilder/actions/workflows/ci.yml/badge.svg)](https://github.com/EoYll/AIAutomaticBuilder/actions/workflows/ci.yml)
 
 ## 特性
 
