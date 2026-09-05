@@ -6,12 +6,13 @@ rpa_tools.py - 本地RPA操作库
 ⚠️ 注意：asyncio.run()（即 run_web_task 内部实现）在一个进程内只能调用一次。
 生成调用脚本时，请将全部网页操作合并进单个异步入口。
 """
-import sys
-import os
-import time
+
 import asyncio
-import subprocess
 import inspect
+import os
+import subprocess
+import sys
+import time
 import traceback
 from collections import namedtuple
 
@@ -27,20 +28,60 @@ RETRY_INTERVAL = 1.0
 # 显式声明可导出接口，避免 `from rpa_tools import *` 把 time/asyncio 等
 # 标准库名称一并灌入调用方命名空间。
 __all__ = [
-    "open_application", "activate_window", "mouse_click", "mouse_move",
-    "mouse_drag", "double_click", "right_click", "mouse_scroll",
-    "input_text", "press_key", "take_screenshot", "wait", "wait_for_user", "wait_window",
-    "copy_clipboard", "get_clipboard",
-    "get_window_rect", "move_window", "close_window",
-    "ensure_dir", "copy_file", "move_file", "delete_file", "list_files",
-    "write_text_file", "read_text_file", "append_text_file", "write_json_file", "open_file",
-    "find_image_on_screen", "click_image", "capture_region", "save_dialog", "open_dialog",
-    "ocr_screen", "ocr_screen_boxes", "click_text", "http_get", "http_post",
-    "setup_logging", "run_with_logging",
-    "ExcelFile", "ExcelApp", "create_excel_file", "write_excel_cell", "read_excel_cell",
-    "read_excel_range", "delete_excel_row", "delete_excel_column",
-    "WebPage", "run_web_task",
-    "DEFAULT_TIMEOUT", "RETRY_TIMES", "RETRY_INTERVAL",
+    "open_application",
+    "activate_window",
+    "mouse_click",
+    "mouse_move",
+    "mouse_drag",
+    "double_click",
+    "right_click",
+    "mouse_scroll",
+    "input_text",
+    "press_key",
+    "take_screenshot",
+    "wait",
+    "wait_for_user",
+    "wait_window",
+    "copy_clipboard",
+    "get_clipboard",
+    "get_window_rect",
+    "move_window",
+    "close_window",
+    "ensure_dir",
+    "copy_file",
+    "move_file",
+    "delete_file",
+    "list_files",
+    "write_text_file",
+    "read_text_file",
+    "append_text_file",
+    "write_json_file",
+    "open_file",
+    "find_image_on_screen",
+    "click_image",
+    "capture_region",
+    "save_dialog",
+    "open_dialog",
+    "ocr_screen",
+    "ocr_screen_boxes",
+    "click_text",
+    "http_get",
+    "http_post",
+    "setup_logging",
+    "run_with_logging",
+    "ExcelFile",
+    "ExcelApp",
+    "create_excel_file",
+    "write_excel_cell",
+    "read_excel_cell",
+    "read_excel_range",
+    "delete_excel_row",
+    "delete_excel_column",
+    "WebPage",
+    "run_web_task",
+    "DEFAULT_TIMEOUT",
+    "RETRY_TIMES",
+    "RETRY_INTERVAL",
 ]
 
 
@@ -73,6 +114,7 @@ def _log(msg: str):
 
 
 # ========== 日志与异常兜底 ==========
+
 
 def setup_logging(enabled: bool = True, log_dir: str = None):
     """开启/关闭文件日志。默认写入 ~/rpa_logs/rpa_<时间戳>.log，返回日志文件路径。"""
@@ -133,10 +175,11 @@ def run_with_logging(main_func):
 
 # ========== 桌面操作（同步） ==========
 
+
 def open_application(app_path: str, wait_seconds: int = 2):
     """打开应用。支持 .exe 绝对路径，也支持系统命令（如 notepad、calc）。"""
     try:
-        if app_path.lower().endswith('.exe'):
+        if app_path.lower().endswith(".exe"):
             subprocess.Popen([app_path])
         else:
             subprocess.Popen(app_path, shell=True)
@@ -171,7 +214,7 @@ def activate_window(title: str, partial: bool = True):
         return False
 
 
-def mouse_click(x: int, y: int, button: str = 'left', clicks: int = 1):
+def mouse_click(x: int, y: int, button: str = "left", clicks: int = 1):
     pyautogui.click(x, y, button=button, clicks=clicks)
     time.sleep(0.2)
     _log(f"🖱️ 点击 ({x}, {y})")
@@ -215,10 +258,7 @@ def press_key(key: str, presses: int = 1):
 
 
 def take_screenshot(filename: str = "screenshot.png", region: tuple = None):
-    if region:
-        im = pyautogui.screenshot(region=region)
-    else:
-        im = pyautogui.screenshot()
+    im = pyautogui.screenshot(region=region) if region else pyautogui.screenshot()
     im.save(filename)
     _log(f"📸 截图已保存: {filename}")
 
@@ -234,6 +274,7 @@ def wait_for_user(message: str = "请完成手动操作（登录/验证码）后
     浏览器为可见窗口，弹窗期间可正常操作浏览器。兼容 --noconsole 打包的 EXE。"""
     try:
         import ctypes
+
         # MB_ICONINFORMATION；hwnd=0 时不阻塞其他应用（可切换到浏览器操作）
         ctypes.windll.user32.MessageBoxW(0, message, "RPA 等待人工操作", 0x40)
         _log("⏳ 人工操作已完成")
@@ -247,8 +288,9 @@ def wait_for_user(message: str = "请完成手动操作（登录/验证码）后
 _Point = namedtuple("_Point", ["x", "y"])
 
 
-def find_image_on_screen(image_path: str, confidence: float = 0.8,
-                         tries: int = RETRY_TIMES, interval: float = RETRY_INTERVAL):
+def find_image_on_screen(
+    image_path: str, confidence: float = 0.8, tries: int = RETRY_TIMES, interval: float = RETRY_INTERVAL
+):
     """图像识别定位，未找到时自动重试，最终返回中心坐标（带 .x/.y）或 None。
 
     使用 OpenCV 模板匹配；通过 np.fromfile + imdecode 读取模板，支持中文路径。
@@ -290,8 +332,7 @@ def find_image_on_screen(image_path: str, confidence: float = 0.8,
     return None
 
 
-def click_image(image_path: str, confidence: float = 0.8,
-                tries: int = RETRY_TIMES, interval: float = RETRY_INTERVAL):
+def click_image(image_path: str, confidence: float = 0.8, tries: int = RETRY_TIMES, interval: float = RETRY_INTERVAL):
     """识图点击：在屏幕上查找指定图片（模板）并点击其中心。适合识别软件中的图标/按钮。
     返回是否成功。"""
     loc = find_image_on_screen(image_path, confidence=confidence, tries=tries, interval=interval)
@@ -315,6 +356,7 @@ def capture_region(region: tuple, filename: str = "template.png"):
 
 
 # ========== 剪贴板与中文输入 ==========
+
 
 def copy_clipboard(text: str):
     """复制文本到剪贴板。中文文本经剪贴板粘贴输入最可靠。"""
@@ -371,7 +413,8 @@ def get_clipboard():
 
 # ========== 鼠标进阶动作 ==========
 
-def double_click(x: int, y: int, button: str = 'left'):
+
+def double_click(x: int, y: int, button: str = "left"):
     pyautogui.doubleClick(x, y, button=button)
     time.sleep(0.2)
     _log(f"🖱️ 双击 ({x}, {y})")
@@ -383,7 +426,7 @@ def right_click(x: int, y: int):
     _log(f"🖱️ 右键点击 ({x}, {y})")
 
 
-def mouse_drag(x1: int, y1: int, x2: int, y2: int, duration: float = 0.5, button: str = 'left'):
+def mouse_drag(x1: int, y1: int, x2: int, y2: int, duration: float = 0.5, button: str = "left"):
     """从 (x1,y1) 按住拖拽到 (x2,y2)。适合框选区域、拖动文件/滑块等。"""
     pyautogui.moveTo(x1, y1, duration=0.2)
     pyautogui.dragTo(x2, y2, duration=duration, button=button)
@@ -398,6 +441,7 @@ def mouse_scroll(amount: int, x: int = None, y: int = None):
 
 
 # ========== 窗口管理增强 ==========
+
 
 def wait_window(title: str, timeout: float = DEFAULT_TIMEOUT, partial: bool = True):
     """等待标题匹配的窗口出现，返回窗口对象；超时返回 None。比固定 sleep 更稳健。"""
@@ -480,6 +524,7 @@ def close_window(title: str, partial: bool = True):
 
 # ========== 文件操作 ==========
 
+
 def ensure_dir(path: str):
     """确保目录存在（含父目录），不存在则创建。"""
     try:
@@ -495,6 +540,7 @@ def copy_file(src: str, dst: str):
     """复制文件（含属性）。"""
     try:
         import shutil
+
         shutil.copy2(src, dst)
         _log(f"📄 已复制: {src} -> {dst}")
         return True
@@ -507,6 +553,7 @@ def move_file(src: str, dst: str):
     """移动/重命名文件。"""
     try:
         import shutil
+
         shutil.move(src, dst)
         _log(f"📄 已移动: {src} -> {dst}")
         return True
@@ -565,7 +612,7 @@ def open_file(path: str):
 def read_text_file(path: str, encoding: str = "utf-8"):
     """读取文本文件内容；失败返回 None。"""
     try:
-        with open(path, "r", encoding=encoding) as f:
+        with open(path, encoding=encoding) as f:
             content = f.read()
         _log(f"📄 已读取文件: {path}（{len(content)} 字符）")
         return content
@@ -591,6 +638,7 @@ def write_json_file(path: str, data, encoding: str = "utf-8"):
     """将数据以 JSON 格式写入文件（中文不转义，便于阅读）。"""
     try:
         import json
+
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         with open(path, "w", encoding=encoding) as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -602,6 +650,7 @@ def write_json_file(path: str, data, encoding: str = "utf-8"):
 
 
 # ========== 文件对话框与 Excel 操作（同步） ==========
+
 
 def _iter_controls(dlg):
     """枚举对话框内的所有控件（优先全深度，兼容 uia / win32 后端）。"""
@@ -685,15 +734,12 @@ def _is_file_dialog(dlg, save_open_keywords):
             return False
         if _find_button(dlg, save_open_keywords) is None:
             return False
-        if _find_button(dlg, ("取消", "Cancel")) is None:
-            return False
-        return True
+        return _find_button(dlg, ("取消", "Cancel")) is not None
     except Exception:
         return False
 
 
-def _handle_file_dialog(path: str, title_re: str, button_keywords, label: str,
-                        overwrite: bool, timeout: float):
+def _handle_file_dialog(path: str, title_re: str, button_keywords, label: str, overwrite: bool, timeout: float):
     """在原生文件对话框（"另存为"/"打开"）中填入路径并确认。
 
     优先连接当前活动窗口：对话框弹出后即为活动窗口，故不依赖窗口标题匹配
@@ -751,8 +797,10 @@ def _handle_file_dialog(path: str, title_re: str, button_keywords, label: str,
                 except Exception as e:
                     last_err = e
         time.sleep(0.3)
-    _log(f"⚠️ 未找到'{label}'对话框: {last_err}\n"
-         f"   提示：保存文件建议改用 write_text_file / ExcelFile 等直接写入方式，避免依赖 GUI 对话框")
+    _log(
+        f"⚠️ 未找到'{label}'对话框: {last_err}\n"
+        f"   提示：保存文件建议改用 write_text_file / ExcelFile 等直接写入方式，避免依赖 GUI 对话框"
+    )
     return False
 
 
@@ -766,8 +814,7 @@ def save_dialog(filename: str, overwrite: bool = True, timeout: float = DEFAULT_
         filename: 目标文件名，如 "test.txt"
         overwrite: 目标文件已存在时是否自动确认覆盖
     """
-    return _handle_file_dialog(filename, r"另存为|Save As", ("保存", "Save"),
-                               "另存为", overwrite, timeout)
+    return _handle_file_dialog(filename, r"另存为|Save As", ("保存", "Save"), "另存为", overwrite, timeout)
 
 
 def open_dialog(path: str, timeout: float = DEFAULT_TIMEOUT):
@@ -777,11 +824,11 @@ def open_dialog(path: str, timeout: float = DEFAULT_TIMEOUT):
     参数:
         path: 要打开的完整文件路径（推荐绝对路径）
     """
-    return _handle_file_dialog(path, r"打开|Open", ("打开", "Open"),
-                               "打开", False, timeout)
+    return _handle_file_dialog(path, r"打开|Open", ("打开", "Open"), "打开", False, timeout)
 
 
 # ========== Excel 操作（文件级，基于 openpyxl） ==========
+
 
 class ExcelFile:
     """基于 openpyxl 的 Excel 文件读写（纯文件级操作，无需安装 Microsoft Excel）。
@@ -792,18 +839,21 @@ class ExcelFile:
         f.write_cell(1, 1, "姓名").write_row(2, ["张三", "李四"])
         f.save()   # 落盘为 报表.xlsx
     """
+
     def __init__(self, path: str):
         self.path = path
         self.wb = None
 
     def create(self, sheet_name: str = "Sheet1"):
         from openpyxl import Workbook
+
         self.wb = Workbook()
         self.wb.active.title = sheet_name
         return self
 
     def load(self):
         from openpyxl import load_workbook
+
         self.wb = load_workbook(self.path)
         return self
 
@@ -829,8 +879,7 @@ class ExcelFile:
     def read_range(self, row1: int, col1: int, row2: int, col2: int, sheet_name: str = None):
         """读取矩形区域，返回二维列表（行为外层）。"""
         ws = self._ws(sheet_name)
-        return [[ws.cell(row=r, column=c).value for c in range(col1, col2 + 1)]
-                for r in range(row1, row2 + 1)]
+        return [[ws.cell(row=r, column=c).value for c in range(col1, col2 + 1)] for r in range(row1, row2 + 1)]
 
     def write_range(self, row1: int, col1: int, data, sheet_name: str = None):
         """从 (row1, col1) 起写入二维列表 data。"""
@@ -954,6 +1003,7 @@ def delete_excel_column(path: str, col: int, count: int = 1, sheet_name: str = N
 
 # ========== Excel 操作（应用级，基于 COM） ==========
 
+
 class ExcelApp:
     """基于 COM (win32com) 的 Excel 应用程序自动化，需安装 Microsoft Excel。
 
@@ -966,11 +1016,12 @@ class ExcelApp:
         excel.save_as(r"C:\\data\\报表.xlsx")
         excel.close()
     """
+
     def __init__(self, visible: bool = True):
         try:
             import win32com.client
         except ImportError:
-            raise RuntimeError("未安装 pywin32，无法控制 Excel 程序（pip install pywin32）")
+            raise RuntimeError("未安装 pywin32，无法控制 Excel 程序（pip install pywin32）") from None
         self.app = win32com.client.Dispatch("Excel.Application")
         self.app.Visible = visible
         self.app.DisplayAlerts = False  # 抑制确认弹窗（含覆盖保存提示）
@@ -1030,6 +1081,7 @@ class ExcelApp:
 
 # ========== 数据采集（OCR / HTTP） ==========
 
+
 def _get_ocr_engine():
     """获取（并缓存）RapidOCR 引擎。"""
     try:
@@ -1060,6 +1112,7 @@ def ocr_screen(region: tuple = None):
         return None
     try:
         import numpy as np
+
         img = pyautogui.screenshot(region=region)
         result, _ = engine(np.array(img))  # result: [[box, text, score], ...] 或 None
         if not result:
@@ -1084,6 +1137,7 @@ def ocr_screen_boxes(region: tuple = None):
         return []
     try:
         import numpy as np
+
         img = pyautogui.screenshot(region=region)
         result, _ = engine(np.array(img))
         if not result:
@@ -1154,8 +1208,9 @@ def http_post(url: str, data=None, json=None, headers: dict = None, timeout: int
 # ========== 网页操作（异步） ==========
 
 # Playwright 浏览器使用的模拟 User-Agent，降低被站点识别为自动化的概率
-_FAKE_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+_FAKE_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
 
 
 class WebPage:
@@ -1164,6 +1219,7 @@ class WebPage:
     支持上下文管理器，推荐用法：async with WebPage() as page:
     退出（含异常）时自动调用 close() 关闭浏览器，避免进程泄漏。
     """
+
     def __init__(self, headless: bool = False, session_file: str = None):
         self.headless = headless
         self.session_file = session_file
@@ -1189,7 +1245,9 @@ class WebPage:
             args=["--disable-blink-features=AutomationControlled"],
         )
         # 若提供了会话文件且存在，则直接加载登录状态（免登录）
-        state = os.path.abspath(self.session_file) if (self.session_file and os.path.exists(self.session_file)) else None
+        state = (
+            os.path.abspath(self.session_file) if (self.session_file and os.path.exists(self.session_file)) else None
+        )
         self.context = await self.browser.new_context(
             user_agent=_FAKE_UA,
             viewport={"width": 1366, "height": 768},
@@ -1255,8 +1313,9 @@ class WebPage:
         _log(f"🏷️ 读取属性 {name}: {value}")
         return value
 
-    async def select_option(self, selector: str, value: str = None, label: str = None,
-                            timeout: int = DEFAULT_TIMEOUT * 1000):
+    async def select_option(
+        self, selector: str, value: str = None, label: str = None, timeout: int = DEFAULT_TIMEOUT * 1000
+    ):
         """在下拉框中按 value 或 label 选择选项。"""
         if value is not None:
             await self.page.select_option(selector, value=value, timeout=timeout)
@@ -1277,8 +1336,7 @@ class WebPage:
 
     async def wait_until_text(self, text: str, timeout: int = DEFAULT_TIMEOUT * 1000):
         """等待页面中出现指定文本（轮询 document.body.innerText）。"""
-        await self.page.wait_for_function(
-            "t => document.body.innerText.includes(t)", arg=text, timeout=timeout)
+        await self.page.wait_for_function("t => document.body.innerText.includes(t)", arg=text, timeout=timeout)
         _log(f"⏳ 页面已出现文本: {text}")
 
     # ---------- 加载自适应 ----------
@@ -1295,7 +1353,8 @@ class WebPage:
         """自动滚动到底部触发懒加载，直到页面高度不再增长或达到次数上限。"""
         last_height = await self.page.evaluate("document.body.scrollHeight")
         used = 0
-        for used in range(1, max_scrolls + 1):
+        for _ in range(1, max_scrolls + 1):
+            used += 1
             await self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
             await asyncio.sleep(interval)
             new_height = await self.page.evaluate("document.body.scrollHeight")
@@ -1327,14 +1386,15 @@ class WebPage:
     async def extract_texts(self, selector: str):
         """抓取匹配选择器的所有元素文本（如 'h1,h2,h3'、'a'），返回字符串列表。"""
         texts = await self.page.eval_on_selector_all(
-            selector,
-            "(els) => els.map(e => (e.innerText || e.textContent || '').trim()).filter(Boolean)")
+            selector, "(els) => els.map(e => (e.innerText || e.textContent || '').trim()).filter(Boolean)"
+        )
         _log(f"📖 提取文本 {len(texts)} 项（{selector}）")
         return texts
 
     async def extract_table(self, index: int = 0):
         """抓取页面中的表格（默认第一个）为二维列表；无表格返回 None。"""
-        table = await self.page.evaluate("""(index) => {
+        table = await self.page.evaluate(
+            """(index) => {
             const tables = document.querySelectorAll('table');
             if (!tables[index]) return null;
             const rows = [];
@@ -1346,7 +1406,9 @@ class WebPage:
                 if (cells.length) rows.push(cells);
             }
             return rows;
-        }""", index)
+        }""",
+            index,
+        )
         _log(f"📊 提取表格: {len(table) if table else 0} 行")
         return table
 
@@ -1397,6 +1459,7 @@ class WebPage:
     async def extract_regex(self, pattern: str):
         """抓取页面可见文本中匹配正则的所有片段。"""
         import re
+
         body = await self.page.evaluate("document.body.innerText")
         matches = re.findall(pattern, body)
         _log(f"🔎 正则匹配 {len(matches)} 项")
@@ -1440,6 +1503,7 @@ class WebPage:
             };
         }""")
         import json
+
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
         _log(f"📋 页面报告已导出: {filename}")
@@ -1485,7 +1549,8 @@ class WebPage:
                 _log(f"🔐 登录成功（元素出现）: {signal}")
             else:
                 await self.page.wait_for_function(
-                    "t => document.body.innerText.includes(t)", arg=signal, timeout=timeout)
+                    "t => document.body.innerText.includes(t)", arg=signal, timeout=timeout
+                )
                 _log(f"🔐 登录成功（文本出现）: {signal}")
             return True
         except Exception as e:
@@ -1513,12 +1578,14 @@ class WebPage:
                 data = await response.json()
             except Exception:
                 return
-            self.captured_responses.append({
-                "url": url,
-                "method": response.request.method,
-                "status": response.status,
-                "json": data,
-            })
+            self.captured_responses.append(
+                {
+                    "url": url,
+                    "method": response.request.method,
+                    "status": response.status,
+                    "json": data,
+                }
+            )
 
         self._capture_handler = _on_response
         self.page.on("response", _on_response)
@@ -1546,8 +1613,8 @@ class WebPage:
         也可先用 start_response_capture 收集、再 get_captured_responses 读取。"""
         try:
             async with self.page.expect_response(
-                    lambda r: url_filter in r.url and "json" in r.headers.get("content-type", ""),
-                    timeout=timeout) as resp_info:
+                lambda r: url_filter in r.url and "json" in r.headers.get("content-type", ""), timeout=timeout
+            ) as resp_info:
                 pass
             resp = await resp_info.value
             data = await resp.json()
@@ -1592,6 +1659,7 @@ def run_web_task(task_func):
     - 即使 task_func 中途抛异常，也会在退出前自动关闭所有未关闭的浏览器，
       避免 chromium 进程残留。
     """
+
     async def _runner():
         try:
             result = task_func()

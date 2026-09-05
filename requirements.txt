@@ -1,8 +1,4 @@
-# 构建机依赖（main.py 运行 + 打包所需）
-pyinstaller
-playwright
-pyautogui
-opencv-python
-pygetwindow
-pillow
-requests
+# rpa-builder 核心运行依赖。
+# 推荐安装方式：pip install -e ".[dev]"   （含开发/测试依赖）
+# 仅运行所需：pip install -e .
+requests>=2.31
